@@ -13,8 +13,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
-
 var MongoClient = require('mongodb').MongoClient,
     assert = require('assert');
 
@@ -29,28 +27,25 @@ function CartDAO(database) {
         "use strict";
 
         /*
-        * TODO-lab5
-        *
-        * LAB #5: Implement the getCart() method.
-        *
-        * Query the "cart" collection by userId and pass the cart to the
-        * callback function.
-        *
-        */
+         * TODO-lab5
+         *
+         * LAB #5: Implement the getCart() method.
+         *
+         * Query the "cart" collection by userId and pass the cart to the
+         * callback function.
+         *
+         */
 
-        var userCart = {
-            userId: userId,
-            items: []
-        }
-        var dummyItem = this.createDummyItem();
-        userCart.items.push(dummyItem);
 
-        // TODO-lab5 Replace all code above (in this method).
+        // This could also be implemented using a technique similar to what we did with getItem() in Lab 3.
+        this.db.collection("cart").find({
+            userId: userId
+        }).limit(1).next(function(err, doc) {
+            assert.equal(null, err);
+            assert.ok(doc);
 
-        // TODO Include the following line in the appropriate
-        // place within your code to pass the userCart to the
-        // callback.
-        callback(userCart);
+            callback(doc);
+        });
     }
 
 
@@ -82,7 +77,26 @@ function CartDAO(database) {
          *
          */
 
-        callback(null);
+        // Rather than using next() this could be implemented with
+        // toArray() and a callback function that expects an array
+        // of items and uses array indexing to access the first item.
+        this.db.collection("cart")
+            .find({
+                userId: userId,
+                "items._id": itemId
+            }, {
+                "items.$": 1
+            })
+            .limit(1)
+            .next(function(err, item) {
+                assert.equal(null, err);
+                console.log(err);
+                if (item != null) {
+                    item = item.items[0];
+                }
+                console.log(item);
+                callback(item);
+            });
 
         // TODO-lab6 Replace all code above (in this method).
     }
@@ -112,9 +126,15 @@ function CartDAO(database) {
         // Will update the first document found matching the query document.
         this.db.collection("cart").findOneAndUpdate(
             // query for the cart with the userId passed as a parameter.
-            {userId: userId},
+            {
+                userId: userId
+            },
             // update the user's cart by pushing an item onto the items array
-            {"$push": {items: item}},
+            {
+                "$push": {
+                    items: item
+                }
+            },
             // findOneAndUpdate() takes an options document as a parameter.
             // Here we are specifying that the database should insert a cart
             // if one doesn't already exist (i.e. "upsert: true") and that
@@ -158,30 +178,51 @@ function CartDAO(database) {
         "use strict";
 
         /*
-        * TODO-lab7
-        *
-        * LAB #7: Update the quantity of an item in the user's cart in the
-        * database by setting quantity to the value passed in the quantity
-        * parameter. If the value passed for quantity is 0, remove the item
-        * from the user's cart stored in the database.
-        *
-        * Pass the updated user's cart to the callback.
-        *
-        * NOTE: Use the solution for addItem as a guide to your solution for
-        * this problem. There are several ways to solve this. By far, the
-        * easiest is to use the $ operator. See:
-        * https://docs.mongodb.org/manual/reference/operator/update/positional/
-        *
-        */
+         * TODO-lab7
+         *
+         * LAB #7: Update the quantity of an item in the user's cart in the
+         * database by setting quantity to the value passed in the quantity
+         * parameter. If the value passed for quantity is 0, remove the item
+         * from the user's cart stored in the database.
+         *
+         * Pass the updated user's cart to the callback.
+         *
+         * NOTE: Use the solution for addItem as a guide to your solution for
+         * this problem. There are several ways to solve this. By far, the
+         * easiest is to use the $ operator. See:
+         * https://docs.mongodb.org/manual/reference/operator/update/positional/
+         *
+         */
+        // @todo: provide error handling
+        quantity = quantity < 0 ? 0 : quantity;
 
-        var userCart = {
-            userId: userId,
-            items: []
-        }
-        var dummyItem = this.createDummyItem();
-        dummyItem.quantity = quantity;
-        userCart.items.push(dummyItem);
-        callback(userCart);
+        var updateOperation = quantity === 0 ? {
+            $pull: {
+                items: {
+                    _id: itemId
+                }
+            }
+        } : {
+            $set: {
+                "items.$.quantity": quantity
+            }
+        };
+
+        this.db.collection('cart')
+            .findOneAndUpdate({
+                    userId: userId,
+                    "items._id": {
+                        $eq: itemId
+                    }
+                },
+                updateOperation, {
+                    upsert: true,
+                    returnOriginal: false
+                },
+                (err, result) => {
+                    assert.equal(err, null);
+                    callback(result.value);
+                });
 
         // TODO-lab7 Replace all code above (in this method).
 

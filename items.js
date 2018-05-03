@@ -13,8 +13,6 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
-
 var MongoClient = require('mongodb').MongoClient,
     assert = require('assert');
 
@@ -28,50 +26,61 @@ function ItemDAO(database) {
         "use strict";
 
         /*
-        * TODO-lab1A
-        *
-        * LAB #1A: Implement the getCategories() method.
-        *
-        * Write an aggregation query on the "item" collection to return the
-        * total number of items in each category. The documents in the array
-        * output by your aggregation should contain fields for "_id" and "num".
-        *
-        * HINT: Test your mongodb query in the shell first before implementing
-        * it in JavaScript.
-        *
-        * In addition to the categories created by your aggregation query,
-        * include a document for category "All" in the array of categories
-        * passed to the callback. The "All" category should contain the total
-        * number of items across all categories as its value for "num". The
-        * most efficient way to calculate this value is to iterate through
-        * the array of categories produced by your aggregation query, summing
-        * counts of items in each category.
-        *
-        * Ensure categories are organized in alphabetical order before passing
-        * to the callback.
-        *
-        */
+         * TODO-lab1A
+         *
+         * LAB #1A: Implement the getCategories() method.
+         *
+         * Write an aggregation query on the "item" collection to return the
+         * total number of items in each category. The documents in the array
+         * output by your aggregation should contain fields for "_id" and "num".
+         *
+         * HINT: Test your mongodb query in the shell first before implementing
+         * it in JavaScript.
+         *
+         * In addition to the categories created by your aggregation query,
+         * include a document for category "All" in the array of categories
+         * passed to the callback. The "All" category should contain the total
+         * number of items across all categories as its value for "num". The
+         * most efficient way to calculate this value is to iterate through
+         * the array of categories produced by your aggregation query, summing
+         * counts of items in each category.
+         *
+         * Ensure categories are organized in alphabetical order before passing
+         * to the callback.
+         *
+         */
 
-   var pipeline = [
-        {"$group": {_id: "$category",
-                    num: {"$sum" : 1}
-                   } },
-        {"$sort": {_id: 1} }
-    ];
-    var categories = [] ;
+        var pipeline = [{
+                "$group": {
+                    _id: "$category",
+                    num: {
+                        "$sum": 1
+                    }
+                }
+            },
+            {
+                "$sort": {
+                    _id: 1
+                }
+            }
+        ];
+        var categories = [];
 
-    this.db.collection("item").aggregate(pipeline).toArray(function(err, categories) {
-        assert.equal(null, err);
+        this.db.collection("item").aggregate(pipeline).toArray(function(err, categories) {
+            assert.equal(null, err);
 
-        var total = 0;
-        for (var i=0; i<categories.length; i++) {
-            total += categories[i].num;
-        }
+            var total = 0;
+            for (var i = 0; i < categories.length; i++) {
+                total += categories[i].num;
+            }
 
-        categories.unshift({_id: "All", num: total});
-//console.log(categories)
-        callback(categories);
-    });
+            categories.unshift({
+                _id: "All",
+                num: total
+            });
+            //console.log(categories)
+            callback(categories);
+        });
 
     }
 
@@ -100,23 +109,27 @@ function ItemDAO(database) {
          * than you do for other categories.
          *
          */
-    var queryDoc;
-    if (category == "All") {
-        queryDoc = {};
-    } else {
-        queryDoc = {category: category};
-    }
-    var mysort = {_id :1}
+        var queryDoc;
+        if (category == "All") {
+            queryDoc = {};
+        } else {
+            queryDoc = {
+                category: category
+            };
+        }
+        var mysort = {
+            _id: 1
+        }
 
-    var cursor = this.db.collection("item").find(queryDoc);
-    cursor.skip(page*itemsPerPage);
-    cursor.limit(itemsPerPage);
-    cursor.sort(mysort);
-    cursor.toArray(function(err, pageItems) {
-        assert.equal(null, err);
-       // console.log(pageItems)
-        callback(pageItems);
-    });
+        var cursor = this.db.collection("item").find(queryDoc);
+        cursor.skip(page * itemsPerPage);
+        cursor.limit(itemsPerPage);
+        cursor.sort(mysort);
+        cursor.toArray(function(err, pageItems) {
+            assert.equal(null, err);
+            // console.log(pageItems)
+            callback(pageItems);
+        });
     }
 
 
@@ -140,21 +153,23 @@ function ItemDAO(database) {
          *
          */
 
-         // TODO Include the following line in the appropriate
-         // place within your   var queryDoc;
-    var queryDoc;
-    if (category == "All") {
-        queryDoc = {};
-    } else {
-        queryDoc = {category: category};
-    }
+        // TODO Include the following line in the appropriate
+        // place within your   var queryDoc;
+        var queryDoc;
+        if (category == "All") {
+            queryDoc = {};
+        } else {
+            queryDoc = {
+                category: category
+            };
+        }
 
-    this.db.collection("item").find(queryDoc).count(function(err, count) {
-        assert.equal(null, err);
-      //  console.log(count)
-        callback(count);
-    });
-}
+        this.db.collection("item").find(queryDoc).count(function(err, count) {
+            assert.equal(null, err);
+            //  console.log(count)
+            callback(count);
+        });
+    }
 
 
     this.searchItems = function(query, page, itemsPerPage, callback) {
@@ -185,19 +200,25 @@ function ItemDAO(database) {
          */
 
         var queryDoc;
-        var mysort = {_id :1}
+        var mysort = {
+            _id: 1
+        }
 
         if (query.trim() == "") {
             queryDoc = {};
         } else {
-            queryDoc = { "$text": {"$search": query} };
+            queryDoc = {
+                "$text": {
+                    "$search": query
+                }
+            };
         }
 
         var cursor = this.db.collection("item").find(queryDoc);
-        cursor.skip(page*itemsPerPage);
+        cursor.skip(page * itemsPerPage);
         cursor.limit(itemsPerPage);
         cursor.sort(mysort);
-        
+
         cursor.toArray(function(err, pageItems) {
             assert.equal(null, err);
             console.log(pageItems)
@@ -205,7 +226,7 @@ function ItemDAO(database) {
         });
 
 
-  
+
     }
 
 
@@ -215,30 +236,34 @@ function ItemDAO(database) {
         var numItems = 0;
 
         /*
-        * TODO-lab2B
-        *
-        * LAB #2B: Using the value of the query parameter passed to this
-        * method, count the number of items in the "item" collection matching
-        * a text search. Pass the count to the callback function.
-        *
-        * getNumSearchItems() depends on the same text index as searchItems().
-        * Before implementing this method, ensure that you've already created
-        * a SINGLE text index on title, slogan, and description. You should
-        * simply do this in the mongo shell.
-        */
+         * TODO-lab2B
+         *
+         * LAB #2B: Using the value of the query parameter passed to this
+         * method, count the number of items in the "item" collection matching
+         * a text search. Pass the count to the callback function.
+         *
+         * getNumSearchItems() depends on the same text index as searchItems().
+         * Before implementing this method, ensure that you've already created
+         * a SINGLE text index on title, slogan, and description. You should
+         * simply do this in the mongo shell.
+         */
 
-            var queryDoc;
-    if (query.trim() == "") {
-        queryDoc = {};
-    } else {
-        queryDoc = { "$text": {"$search": query} };
-    }
+        var queryDoc;
+        if (query.trim() == "") {
+            queryDoc = {};
+        } else {
+            queryDoc = {
+                "$text": {
+                    "$search": query
+                }
+            };
+        }
 
-    this.db.collection("item").find(queryDoc).count(function(err, count) {
-        assert.equal(null, err);
-       // console.log(count);
-        callback(count);
-    });
+        this.db.collection("item").find(queryDoc).count(function(err, count) {
+            assert.equal(null, err);
+            // console.log(count);
+            callback(count);
+        });
     }
 
 
@@ -254,18 +279,20 @@ function ItemDAO(database) {
          * _id and pass the matching item to the callback function.
          *
          */
-        this.db.collection("item").find({_id: itemId}).toArray(function(err, docs) {
+        this.db.collection("item").find({
+            _id: itemId
+        }).toArray(function(err, docs) {
             assert.equal(null, err);
 
             var itemDoc = null;
-            console.log(docs)
+            //console.log(docs)
             if (docs.length > 0) {
                 itemDoc = docs[0];
-        }
-        //console.log(itemDoc);
-        callback(itemDoc);
+            }
+            //console.log(itemDoc);
+            callback(itemDoc);
 
-    });
+        });
 
     }
 
@@ -307,9 +334,13 @@ function ItemDAO(database) {
         }
         console.log(reviewDoc)
 
-        this.db.collection("item").updateOne(
-            {_id: itemId},
-            {"$push": {reviews: reviewDoc}},
+        this.db.collection("item").updateOne({
+                _id: itemId
+            }, {
+                "$push": {
+                    reviews: reviewDoc
+                }
+            },
             function(err, doc) {
                 assert.equal(null, err);
                 callback(doc);
