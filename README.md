@@ -1,7 +1,8 @@
 # mongomart
 
-Final course project for M101JS - MongoDB for NodeJS Developers at Mongo University 
-Ecommerce app Using the MongoDB driver and Express
+#Final course project for M101JS - MongoDB for NodeJS Developers at Mongo University 
+
+#Ecommerce app Using the MongoDB driver and Express
 
 1. Clone Repository.
 2. Install the dependencies.
